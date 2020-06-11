@@ -1,0 +1,84 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "regionId": {
+            "type": "string",
+            "defaultValue": "northeurope"
+        },
+        "identityType": {
+            "type": "string",
+            "defaultValue": "None"
+        },
+		"virtualNetworks": {
+            "defaultValue": "vnt-3201-az02"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2018-10-15-preview",
+            "name": "[parameters('name')]",
+            "type": "Microsoft.DevTestLab/labs",
+            "location": "[parameters('regionId')]",
+            "tags": {
+                "opEnvironment": "ENG",
+                "cmdbReference": "AT38995",
+                "billingReference": "UBS_CLD_ENG_0005"
+            },
+            "properties": {
+                "labStorageType": "Premium"
+            },
+            "identity": {
+                "type": "[parameters('identityType')]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2018-10-15-preview",
+                    "name": "LabVmsShutdown",
+                    "location": "[parameters('regionId')]",
+                    "type": "schedules",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DevTestLab/labs', parameters('name'))]"
+                    ],
+                    "properties": {
+                        "status": "Enabled",
+                        "timeZoneId": "Central European Standard Time",
+                        "dailyRecurrence": {
+                            "time": "1900"
+                        },
+                        "taskType": "LabVmsShutdownTask",
+                        "notificationSettings": {
+                            "status": "Disabled",
+                            "timeInMinutes": 30
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2018-10-15-preview",
+                    "name": "[parameters('virtualNetworks')]",
+                    "type": "virtualNetworks",
+                    "location": "[parameters('regionId')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DevTestLab/labs', parameters('name'))]"
+                    ]
+                },
+                {
+                    "apiVersion": "2018-10-15-preview",
+                    "name": "Public Environment Repo",
+                    "type": "artifactSources",
+                    "location": "[parameters('regionId')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.DevTestLab/labs', parameters('name'))]"
+                    ],
+                    "properties": {
+                        "status": "Disabled"
+                    }
+                }
+            ]
+        }
+    ]
+}
